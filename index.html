@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>КМТ — Учеба</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#0a0c10; --bg2:#12161f; --card:rgba(26,32,44,0.7); --card-hover:rgba(36,44,60,0.8);
+  --tx:#ffffff; --tx2:#a0aabf; --hint:#5c6a82;
+  --acc:#4c8dff; --acc-glow:rgba(76,141,255,0.3);
+  --ok:#2ecc71; --ok-glow:rgba(46,204,113,0.2);
+  --warn:#f1c40f; --danger:#ff6b6b;
+  --border:rgba(255,255,255,0.08);
+  --radius:16px;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;outline:none}
+body{
+  margin:0; padding:0; background:var(--bg); color:var(--tx); font:15px/1.4 var(--font);
+  min-height:100vh; overflow-x:hidden; padding-bottom:90px;
+}
+body::before, body::after{
+  content:''; position:fixed; border-radius:50%; filter:blur(80px); z-index:-1; opacity:0.4; pointer-events:none;
+}
+body::before{ top:-10%; left:-20%; width:70vw; height:70vw; background:var(--acc); }
+body::after{ bottom:-10%; right:-20%; width:60vw; height:60vw; background:#8b5cf6; }
+
+header{
+  padding: 20px 20px 10px; display:flex; justify-content:space-between; align-items:center;
+  position:relative; z-index:10;
+}
+.logo-area{ display:flex; align-items:center; gap:12px; }
+.logo-img{
+  width:44px; height:44px; border-radius:12px; object-fit:cover;
+  box-shadow:0 4px 15px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1);
+  background:var(--bg2);
+}
+.logo-txt{
+  width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, var(--acc), #8b5cf6); font-weight:800; font-size:16px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.5);
+}
+.greeting{ font-size:12px; color:var(--tx2); text-transform:uppercase; letter-spacing:0.5px; }
+.grp-title{ font-size:18px; font-weight:700; }
+.header-right{ text-align:right; }
+.btn-change{ font-size:12px; color:var(--acc); background:none; border:none; padding:0; font-weight:600; cursor:pointer; }
+
+.main-content{ padding: 0 20px; position:relative; z-index:10; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+.date-header{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px; margin-top:10px; }
+.date-big{ font-size:32px; font-weight:800; line-height:1.1; letter-spacing:-0.5px; }
+.date-sub{ font-size:14px; color:var(--tx2); margin-top:4px; }
+.day-nav{ display:flex; gap:8px; }
+.day-btn{ width:36px; height:36px; border-radius:50%; background:var(--card); border:1px solid var(--border); color:var(--tx); display:flex; align-items:center; justify-content:center; cursor:pointer; backdrop-filter:blur(10px); }
+.day-btn:active{ background:var(--card-hover); transform:scale(0.95); }
+
+.timeline{ position:relative; padding-left:24px; }
+.timeline::before{
+  content:''; position:absolute; left:9px; top:10px; bottom:0; width:2px; background:rgba(255,255,255,0.1);
+  border-radius:2px;
+}
+.lesson{ position:relative; margin-bottom:14px; animation:slideIn 0.3s ease backwards; }
+.lesson:nth-child(1){ animation-delay:0.05s; } .lesson:nth-child(2){ animation-delay:0.1s; } .lesson:nth-child(3){ animation-delay:0.15s; }
+.lesson:nth-child(4){ animation-delay:0.2s; } .lesson:nth-child(5){ animation-delay:0.25s; }
+@keyframes slideIn{ from{opacity:0; transform:translateX(-10px);} to{opacity:1; transform:translateX(0);} }
+
+.lesson-dot{
+  position:absolute; left:-24px; top:16px; width:20px; height:20px; border-radius:50%;
+  background:var(--bg2); border:3px solid var(--hint); display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:700; color:var(--tx2); transition:0.3s; z-index:2;
+}
+.lesson-card{
+  background:var(--card); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border); border-radius:var(--radius); padding:16px;
+  display:flex; justify-content:space-between; align-items:center;
+  box-shadow:0 4px 20px rgba(0,0,0,0.2); transition:0.3s;
+}
+.lesson-card:active{ transform:scale(0.98); }
+.lesson-title{ font-size:16px; font-weight:700; margin-bottom:6px; line-height:1.2; }
+.lesson-room{ font-size:13px; color:var(--tx2); display:flex; align-items:center; gap:6px; }
+.lesson-time{ text-align:right; }
+.time-val{ font-size:15px; font-weight:700; color:var(--tx); }
+.time-dur{ font-size:11px; color:var(--hint); margin-top:2px; }
+
+.lesson.now .lesson-dot{ border-color:var(--ok); background:var(--ok); color:#fff; box-shadow:0 0 15px var(--ok-glow); }
+.lesson.now .lesson-card{ border-color:var(--ok); box-shadow:0 4px 25px var(--ok-glow); }
+.lesson.now .lesson-title{ color:var(--ok); }
+
+.lesson.past{ opacity:0.5; }
+.lesson.past .lesson-dot{ border-color:var(--hint); }
+.lesson.past .lesson-title{ text-decoration:line-through; }
+
+.bottom-nav{
+  position:fixed; bottom:0; left:0; right:0; height:70px; background:rgba(15,19,26,0.85);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid var(--border);
+  display:flex; justify-content:space-around; align-items:center; z-index:100; padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-btn{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  background:none; border:none; color:var(--hint); font-size:10px; font-weight:600; cursor:pointer;
+  width:33%; height:100%; transition:0.2s; text-transform:uppercase; letter-spacing:0.3px;
+}
+.nav-btn svg{ width:24px; height:24px; fill:currentColor; transition:0.2s; }
+.nav-btn.active{ color:var(--acc); }
+.nav-btn.active svg{ filter:drop-shadow(0 0 8px var(--acc-glow)); transform:translateY(-2px); }
+
+.empty{ display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; text-align:center; color:var(--hint); }
+.empty svg{ width:64px; height:64px; fill:currentColor; opacity:0.5; margin-bottom:16px; }
+.empty h3{ margin:0 0 8px; color:var(--tx); font-size:18px; }
+.empty p{ margin:0; font-size:14px; }
+
+.skeleton{ background:linear-gradient(90deg, var(--card) 25%, var(--card-hover) 50%, var(--card) 75%); background-size:200% 100%; animation:sk 1.5s infinite; border-radius:var(--radius); height:80px; margin-bottom:14px; }
+@keyframes sk{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+
+.bells-list{ display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+.bell-card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px;
+  display:flex; justify-content:space-between; align-items:center; backdrop-filter:blur(10px);
+}
+.bell-num{ width:32px; height:32px; border-radius:10px; background:var(--bg2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--acc); }
+.bell-time{ font-size:18px; font-weight:700; }
+.bell-break{ font-size:12px; color:var(--hint); }
+.bell-card.now{ border-color:var(--ok); background:rgba(46,204,113,0.1); }
+
+.search-box{ position:relative; margin-bottom:20px; }
+.search-input{
+  width:100%; padding:14px 16px 14px 44px; border-radius:14px; background:var(--card); border:1px solid var(--border);
+  color:var(--tx); font-size:15px; backdrop-filter:blur(10px); transition:0.2s;
+}
+.search-input:focus{ border-color:var(--acc); background:rgba(26,32,44,0.9); }
+.search-icon{ position:absolute; left:14px; top:14px; width:20px; height:20px; fill:var(--hint); }
+
+.teacher-card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:10px;
+  display:flex; gap:14px; align-items:flex-start; backdrop-filter:blur(10px); cursor:pointer; transition:0.2s;
+}
+.teacher-card:active{ transform:scale(0.98); background:var(--card-hover); }
+.teacher-avatar{
+  width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg, rgba(76,141,255,0.2), rgba(139,92,246,0.2));
+  border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center;
+  font-weight:700; color:var(--acc); font-size:16px; flex-shrink:0;
+}
+.teacher-info{ flex:1; min-width:0; }
+.teacher-name{ font-weight:700; font-size:15px; margin-bottom:4px; }
+.teacher-subs{ font-size:13px; color:var(--tx2); display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.sub-chip{ background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px; font-size:11px; border:1px solid var(--border); }
+
+.modal-overlay{
+  position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px);
+  display:flex; align-items:center; justify-content:center; z-index:1000; opacity:0; pointer-events:none; transition:0.3s; padding:20px;
+}
+.modal-overlay.active{ opacity:1; pointer-events:all; }
+.modal{
+  background:var(--bg2); border:1px solid var(--border); border-radius:20px; width:100%; max-width:400px;
+  padding:24px; transform:scale(0.9); transition:0.3s; max-height:80vh; display:flex; flex-direction:column;
+}
+.modal-overlay.active .modal{ transform:scale(1); }
+.modal h2{ margin:0 0 16px; font-size:20px; }
+.groups-scroll{ overflow-y:auto; display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+.grp-btn{
+  background:var(--card); border:1px solid var(--border); color:var(--tx); padding:10px 16px; border-radius:10px;
+  font-size:14px; font-weight:600; cursor:pointer; transition:0.2s;
+}
+.grp-btn:active{ transform:scale(0.95); }
+.grp-btn.sel{ background:var(--acc); border-color:var(--acc); color:#fff; }
+.btn{ width:100%; padding:15px; border-radius:12px; border:none; background:var(--acc); color:#fff; font-size:16px; font-weight:700; cursor:pointer; transition:0.2s; }
+.btn:active{ transform:scale(0.97); opacity:0.9; }
+
+.view-section{ display:none; animation:fadeIn 0.3s ease; }
+.view-section.active{ display:block; }
+.hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<header id="header" class="hidden">
+  <div class="logo-area">
+    <img src="https://pic.rtbcdn.ru/user/7e/9b/7e9bd282c4e094b4274946dd939ca2c0.jpg" class="logo-img" alt="КМТ" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="logo-txt hidden">КМТ</div>
+    <div>
+      <div class="greeting" id="greeting">Добрый день</div>
+      <div class="grp-title" id="header-group">Загрузка...</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn-change" id="btn-change-grp">Сменить</button>
+  </div>
+</header>
+
+<main class="main-content">
+  <section id="view-schedule" class="view-section active">
+    <div id="schedule-content">
+      <div class="skeleton" style="height:100px;"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  </section>
+
+  <section id="view-bells" class="view-section">
+    <h1 style="margin:10px 0 20px;font-size:28px;">Звонки</h1>
+    <div class="bells-list" id="bells-content"></div>
+  </section>
+
+  <section id="view-teachers" class="view-section">
+    <h1 style="margin:10px 0 20px;font-size:28px;">Преподаватели</h1>
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input type="text" class="search-input" id="teacher-search" placeholder="Поиск по фамилии или предмету...">
+    </div>
+    <div id="teachers-content"></div>
+  </section>
+</main>
+
+<nav class="bottom-nav hidden" id="nav">
+  <button class="nav-btn active" data-view="schedule">
+    <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+    Расписание
+  </button>
+  <button class="nav-btn" data-view="bells">
+    <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
+    Звонки
+  </button>
+  <button class="nav-btn" data-view="teachers">
+    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    Преподаватели
+  </button>
+</nav>
+
+<div class="modal-overlay" id="grp-modal">
+  <div class="modal">
+    <h2>Выберите группу</h2>
+    <div class="groups-scroll" id="groups-list"></div>
+    <button class="btn" id="btn-save-grp">Продолжить</button>
+  </div>
+</div>
+
+<script>
+const tg = Telegram.WebApp;
+tg.ready(); tg.expand();
+if (tg.setHeaderColor) tg.setHeaderColor("#0a0c10");
+if (tg.setBackgroundColor) tg.setBackgroundColor("#0a0c10");
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const state = { tab: 'schedule', group: null, sch: null, teachers: [], selectedGrp: null, dateIdx: -1 };
+
+async function api(path, opts={}) {
+  const r = await fetch(path, { ...opts, headers: { "X-Init-Data": tg.initData, ...(opts.body ? {"Content-Type": "application/json"} : {}) } });
+  if (!r.ok) throw new Error((await r.json().catch(()=>({}))).detail || r.status);
+  return r.json();
+}
+const esc = s => String(s||'').replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 6) return 'Доброй ночи'; if (h < 12) return 'Доброе утро'; if (h < 18) return 'Добрый день'; return 'Добрый вечер';
+}
+
+async function init() {
+  try {
+    const me = await api("/api/me");
+    if (!me.registered) { openGroupModal(me.groups); return; }
+    state.group = me.group; await loadData();
+  } catch (e) { showError(e.message); }
+}
+
+function openGroupModal(groups) {
+  state.selectedGrp = state.group;
+  $("#groups-list").innerHTML = groups.map(g => `<button class="grp-btn ${g === state.selectedGrp ? 'sel' : ''}" onclick="selectGroup('${esc(g)}')">${esc(g)}</button>`).join('');
+  $("#grp-modal").classList.add('active');
+}
+
+window.selectGroup = (g) => {
+  state.selectedGrp = g;
+  $$('.grp-btn').forEach(b => b.classList.toggle('sel', b.textContent === g));
+};
+
+$("#btn-save-grp").onclick = async () => {
+  if (!state.selectedGrp) return;
+  try {
+    await api("/api/register", {method:"POST", body: JSON.stringify({group: state.selectedGrp})});
+    state.group = state.selectedGrp; $("#grp-modal").classList.remove('active'); await loadData();
+  } catch (e) { alert("Ошибка: " + e.message); }
+};
+
+async function loadData() {
+  $("#header").classList.remove('hidden'); $("#nav").classList.remove('hidden');
+  $("#greeting").textContent = getGreeting(); $("#header-group").textContent = "Группа " + state.group;
+  try {
+    const [sch, teachers] = await Promise.all([ api("/api/schedule"), api("/api/teachers") ]);
+    state.sch = sch; state.teachers = teachers.items;
+    const today = new Date().toISOString().slice(0,10);
+    let idx = state.sch.dates.findIndex(d => d.iso >= today);
+    if (idx === -1) idx = state.sch.dates.length - 1;
+    state.dateIdx = idx;
+    renderSchedule(); renderBells(); renderTeachers();
+  } catch (e) { showError(e.message); }
+}
+
+function renderSchedule() {
+  const wrap = $("#schedule-content");
+  if (!state.sch.dates.length) return wrap.innerHTML = `<div class="empty"><h3>Пар нет</h3><p>На этот период расписание отсутствует</p></div>`;
+  const d = state.sch.dates[state.dateIdx]; const lessons = d.lessons;
+  const bells = Object.fromEntries(state.sch.bells.map(b => [b.n, b]));
+  const isToday = d.iso === new Date().toISOString().slice(0,10);
+  const nowM = new Date().getHours()*60 + new Date().getMinutes();
+  const daysStr = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']; const mStr = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const dObj = new Date(d.iso); const dayName = daysStr[dObj.getDay()]; const fullDate = `${dObj.getDate()} ${mStr[dObj.getMonth()]}`;
+
+  let h = `<div class="date-header"><div><div class="date-big">${dayName}, ${fullDate}</div><div class="date-sub">${lessons.length} ${lessons.length===1?'пара':lessons.length<5?'пары':'пар'}</div></div><div class="day-nav"><div class="day-btn" onclick="prevDay()">‹</div><div class="day-btn" onclick="nextDay()">›</div></div></div>`;
+  
+  if (!lessons.length) {
+    h += `<div class="empty"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg><h3>Выходной!</h3><p>В этот день пар нет</p></div>`;
+  } else {
+    h += `<div class="timeline">`;
+    lessons.forEach(l => {
+      const b = bells[l.num] || {}; let cls = '';
+      if (isToday && b.start) {
+        const sM = b.start.split(':').reduce((a,b)=>a*60+ +b,0); const eM = b.end.split(':').reduce((a,b)=>a*60+ +b,0);
+        if (nowM >= sM && nowM <= eM) cls = 'now'; else if (nowM > eM) cls = 'past';
+      }
+      const room = l.room === 'ДО' ? 'Дистант' : l.room ? `каб. ${l.room}` : '';
+      const dur = b.start ? `${b.start} – ${b.end}` : '';
+      h += `<div class="lesson ${cls}"><div class="lesson-dot">${l.num}</div><div class="lesson-card"><div class="lesson-info"><div class="lesson-title">${esc(l.title)}</div><div class="lesson-room">${room ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>${room}` : ''}</div></div><div class="lesson-time"><div class="time-val">${dur}</div><div class="time-dur">${cls === 'now' ? 'Сейчас' : ''}</div></div></div></div>`;
+    });
+    h += `</div>`;
+  }
+  wrap.innerHTML = h;
+}
+
+window.prevDay = () => { if (state.dateIdx > 0) { state.dateIdx--; renderSchedule(); } };
+window.nextDay = () => { if (state.dateIdx < state.sch.dates.length - 1) { state.dateIdx++; renderSchedule(); } };
+
+function renderBells() {
+  const wrap = $("#bells-content"); const nowM = new Date().getHours()*60 + new Date().getMinutes(); const isToday = new Date().getDay() !== 0;
+  wrap.innerHTML = state.sch.bells.map((b, i) => {
+    const sM = b.start.split(':').reduce((a,v)=>a*60+ +v,0); const eM = b.end.split(':').reduce((a,v)=>a*60+ +v,0);
+    const isNow = isToday && nowM >= sM && nowM <= eM; let breakTxt = '';
+    if (i < state.sch.bells.length - 1) {
+      const nextS = state.sch.bells[i+1].start.split(':').reduce((a,v)=>a*60+ +v,0); const diff = nextS - eM;
+      if (diff > 0) breakTxt = `${diff} мин перемена`;
+    }
+    return `<div class="bell-card ${isNow ? 'now' : ''}"><div style="display:flex;align-items:center;gap:14px"><div class="bell-num">${b.n}</div><div class="bell-time">${b.start} – ${b.end}</div></div><div class="bell-break">${breakTxt}</div></div>`;
+  }).join('');
+}
+
+function renderTeachers() {
+  const wrap = $("#teachers-content"); const q = $("#teacher-search").value.toLowerCase().trim();
+  let filtered = state.teachers;
+  if (q) filtered = state.teachers.filter(t => t.name.toLowerCase().includes(q) || t.subjects.some(s => s.toLowerCase().includes(q)));
+  if (!filtered.length) return wrap.innerHTML = `<div class="empty"><h3>Никого не нашли</h3><p>Попробуйте другой запрос</p></div>`;
+  wrap.innerHTML = filtered.map(t => {
+    const initials = t.name.split(' ').slice(0,2).map(w => w[0]).join('');
+    const subs = t.subjects.length ? t.subjects.map(s => `<span class="sub-chip">${esc(s)}</span>`).join('') : '<span class="sub-chip">Дисциплины не указаны</span>';
+    return `<div class="teacher-card"><div class="teacher-avatar">${initials}</div><div class="teacher-info"><div class="teacher-name">${esc(t.name)}</div><div class="teacher-subs">${subs}</div></div></div>`;
+  }).join('');
+}
+$("#teacher-search").addEventListener('input', renderTeachers);
+
+$$('.nav-btn').forEach(btn => {
+  btn.onclick = () => {
+    $$('.nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+    $$('.view-section').forEach(v => v.classList.remove('active')); $("#view-" + btn.dataset.view).classList.add('active');
+  };
+});
+
+$("#btn-change-grp").onclick = async () => { const me = await api("/api/me"); openGroupModal(me.groups); };
+function showError(msg) { $("#schedule-content").innerHTML = `<div class="empty"><h3>Ошибка</h3><p>${esc(msg)}</p></div>`; }
+init();
+</script>
+</body>
+</html>
